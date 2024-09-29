@@ -19,7 +19,7 @@ void AVLTree::nodeHeight(Node* node) {
 //checking balance
 int AVLTree::checkBalance(Node *node) {
     int balance = 0;
-    if (!node || (!node->left) && (!node->right)) { // if node doesnt exist or is a lead node, then it is balanced
+    if (!node || (!node->left && !node->right)) { // if node doesnt exist or is a lead node, then it is balanced
         balance = 0;
     }if (!node->left) { // if it is right concentrated then set balance to the negated height of the right subtree so that we can balance it later in insert code
         balance = node->right->height * (-1);
@@ -124,21 +124,18 @@ void AVLTree::searchIDHelper(Node* node, std::string ufid) {
 void AVLTree::searchNAME(std::string name) {
     searchNAMEHelper(root, name);
 }
-bool AVLTree::searchNAMEHelper(Node* node, std::string name) {
+void AVLTree::searchNAMEHelper(Node* node, std::string name) {
     if (!node) {
         std::cout << "unsuccessful" << std:: endl;
-        return false;
+        return;
     }
 
     if (node->name == name) {
         std::cout << node->ufid << std::endl;
-        return true;
     }
 
-    if (searchNAMEHelper(node->left, name)) { // first check left recursively, if found then it will be true and returned as true
-        return true;
-    }
-    return searchNAMEHelper(node->right, name); // if not in left subtree, check right recursively
+    searchNAMEHelper(node->left, name); // first check left recursively, if found then it will print ufid
+    searchNAMEHelper(node->right, name); // if not in left subtree, check right recursively
 }
 
 //printing
@@ -174,6 +171,7 @@ void AVLTree::printInOrderHelper(Node* node) {
         }
 
     }
+    std::cout << std::endl;
 }
 
 void AVLTree::printPreOrder() {
@@ -266,7 +264,7 @@ void AVLTree::remove(std::string ufid) {
 }
 Node* AVLTree::removeHelper(Node* node, std::string ufid) {
     if (!node) { // doesnt exist
-        return node;
+        return nullptr;
     }
 
     if (node->ufid == ufid) {
@@ -283,11 +281,14 @@ Node* AVLTree::removeHelper(Node* node, std::string ufid) {
             delete node;
             return temp;
         }else { // has two children
-            Node* successor = node->right; // the bigger num is right, so it will be replaced by that
-            while (successor->left){
-                successor = successor->left; // if it has less values they will be successor
+            Node* temp = node->right; // store right child
+            temp->left = node->left; // transfer left child
+            if (node == root){
+                root = temp;
             }
-            node->right = removeHelper(node->right, successor->ufid); // keep checking unless it has more children
+            delete node;
+            return temp;
+            //maybe need more code here
         }
     }else if (stoi(ufid) < stoi(node->ufid)) { // if less than node, then check left subtree to find
         node->left = removeHelper(node->left, ufid); // the returned temp will be nodes->left so automatically replaced
@@ -303,18 +304,15 @@ Node* AVLTree::removeHelper(Node* node, std::string ufid) {
 }
 
 void AVLTree::removeInOrder(int index){
-    removeInOrderHelper(root, index);
+    root = removeInOrderHelper(root, index);
 }
-Node* AVLTree::removeInOrderHelper(Node* node, int index){
+Node* AVLTree::removeInOrderHelper(Node* node, int& index){
     if (!node){
-        if (index > 0) {
-            std::cout << "unsuccessful" << std::endl; // if index doesn't exist cant be removed
-        }
         return node;
+    }else {
+        index--; //if not null then decrease index
     }
-
-    node->left = removeInOrderHelper(node->left, index);
-    if (index == 0) {
+    if (index == -1){
         std::cout << "successful" << std::endl;
         if (!node->left && !node->right) { // if node is leaf, just delete
             delete node;
@@ -328,16 +326,21 @@ Node* AVLTree::removeInOrderHelper(Node* node, int index){
             delete node;
             return temp;
         }else { // has two children
-            Node* successor = node->right; // the bigger num is right, so it will be replaced by that
-            while (successor->left){
-                successor = successor->left; // if it has fewer values they will be successor
+            Node *temp = node->right; // store right child
+            temp->left = node->left; // transfer left child
+            if (node == root) {
+                root = temp;
             }
-            node->right = removeInOrderHelper(node->right, --index); // remove successor
+            delete node;
+            return temp;
         }
-    }else{
-        index--;
-        node->right = removeInOrderHelper(node->right, index); // check right subtree
+    }else if (index < -1){
+        std::cout << "unsuccessful" << std::endl;
+        return node;
     }
+
+    node->left = removeInOrderHelper(node->left, index);
+    node->right = removeInOrderHelper(node->right, index); // check right subtree
 
     nodeHeight(node); // update height
 

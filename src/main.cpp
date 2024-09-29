@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include"AVL.h"
 
 /* Note:
@@ -7,80 +8,128 @@
 */
 
 bool checkIfInputCorrect(std::string input, bool letters) { // checks if the input string has letter or number characters
-    if (letters && input.find_first_not_of("abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMONPQRSTUVWXYZ") != std::string::npos) { // if letters are meant to be in the string and are not return false
+    if ((!letters && input.length() != 8) && (letters && input.length() > 0)){ // making sure an actual input exists, for search
         return false;
-    }else if (!letters && input.find_first_not_of("0123456789") != std::string::npos) { // if letters are meant to be in it and are not return false
-        return false;
+    }
+    for (char letter : input) {
+        if (letter == ' ') {
+            continue;
+        }
+        if (letters && !std::isalpha(letter)) { // if letters are meant to be in the string and are not return false; taken from Project 1 video
+            return false;
+        } else if (!letters && !std::isdigit(letter)) { // if letters are meant to be in it and are not return false; taken from Project 1 video
+            return false;
+        }
     }
     return true;
 }
-int main(){
-    AVLTree* gators = new AVLTree;
-    int input; //how many lines there will be
-    std::cin >> input;
+int main() {
+    AVLTree *gators = new AVLTree;
+    std::string numOfCommands; // code from project 1 video breakdown
+    getline(std::cin, numOfCommands);
+
+    std::vector<std::string> functions;
+    std::vector<std::string> names;
+    std::vector<std::string> ufids;
 
 
-    //read each line and store them into a vector
-    for (int i = 0; i < input; i++) {
-        std::string command; //creating variables to keep track of the lines of input
-        std::cin >> command;
+    for (int i = 0; i < stoi(numOfCommands); i++) { //code from video project 1 breakdown
+        std::string line;
+        getline(std::cin, line);
+
+        std::istringstream newCin(line);
+
+        std::string function;
+        getline(newCin, function, ' ');
+        functions.push_back(function);
+
+        if (function == "remove" || function == "removeInorder") {
+            names.push_back("");
+
+            std::string ufid;
+            getline(newCin, ufid);
+            ufids.push_back(ufid);
+        }else {
+            std::string next;
+            getline(newCin, next, '"');
+
+            std::string name;
+            getline(newCin, name, '"');
+            names.push_back(name);
+
+            std::string next2;
+            getline(newCin, next2, ' ');
+
+            std::string ufid;
+            getline(newCin, ufid);
+            ufids.push_back(ufid);
+        }
+
+//        std::cout << function << std::endl;
+//        std::cout << name << std::endl;
+//        std::cout << ufid << std::endl;
+    }
+
+    for (int i = 0; i < functions.size(); i++) {
+
         bool letters;
 
-        if (command.substr(0,6) == "insert") {
-            command.erase(0, 6);
+        if (functions[i] == "insert") {
             letters = true;
-            std::string name = command.substr(0, command.find(" ") - 1); // taking out the second string left in command, to have name
-            if (!checkIfInputCorrect(name, letters)) {
+            if (!checkIfInputCorrect(names[i], letters)) {
                 std::cout << "unsuccessful" << std::endl;
                 return 0;
             }
 
             letters = false;
-            command.erase(0, command.find(" ") + 1); // only leaving ufid in command
-            std::string ufid = command;
-            if (!checkIfInputCorrect(ufid, letters) && ufid.size() != 8) {
+            if (!checkIfInputCorrect(ufids[i], letters)) {
                 std::cout << "unsuccessful" << std::endl;
                 return 0;
             }
-            gators->insert(name, ufid);
-        }else if (command.substr(0,6) == "remove") {
-            command.erase(0, 6);
+            gators->insert(names[i], ufids[i]);
+        }
+        else if (functions[i] == "remove") {
             letters = false;
-            std::string ufid = command.substr(0, command.find(" ") - 1); // leaving the id
-            if (!checkIfInputCorrect(ufid, letters)) {
+            if (!checkIfInputCorrect(ufids[i], letters)) {
                 std::cout << "unsuccessful" << std::endl;
                 return 0;
             }
-            gators->remove(ufid);
-        }else if (command.substr(0,13) == "removeInOrder") {
-            command.erase(0, 6); // leaving n index only
-            letters = false;
-            std::string n = command;
-            if (!checkIfInputCorrect(n, letters)) {
-                std::cout << "unsuccessful" << std::endl;
-                return 0;
+            gators->remove(ufids[i]);
+        }else if (functions[i] == "removeInorder") {
+            for (char letter : ufids[i]) {
+                if (!std::isdigit(letter)) { // second input but the name of the var is name
+                    std::cout << "unsuccessful" << std::endl;
+                    return 0;
+                }
             }
-            gators->removeInOrder(stoi(n)); // convert string into int
-        }else if (command.substr(0, 6) == "search"){
-            command.erase(0, 6); // leaving the name or id
-            letters = true;
-            std::string nameOrID = command;
-            if (!checkIfInputCorrect(nameOrID, letters)) { // checking if letters exist, if not it must be an id input
-                gators->searchNAME(nameOrID);
+            gators->removeInOrder(stoi(ufids[i])); // convert string into int
+        }else if (functions[i] == "search"){
+            if (ufids[i] != "") {
+                letters = false;
+                if (!checkIfInputCorrect(ufids[i], letters)){ //had to do it a diff way beacuse there is two things to check for
+                    std::cout << "unsuccessful" << std::endl;
+                    return 0;
+                }
+                gators->searchID(ufids[i]);
+            }else if (names[i] != ""){
+                letters = true;
+                if (!checkIfInputCorrect(names[i], letters)) { // checking if letters exist, if not it must be an id input
+                    std::cout << "unsuccessful" << std::endl;
+                    return 0;
+                }
+                gators->searchNAME(names[i]);
             }
-            else {
-                gators->searchID(nameOrID);
-            }
-        }else if (command == "printInOrder"){
+        }else if (functions[i] == "printInorder") {
             gators->printInOrder();
-        }else if (command == "printPreOrder"){
+        }else if (functions[i] == "printPreorder") {
             gators->printPreOrder();
-        }else if (command == "printPostOrder"){
+        }else if (functions[i] == "printPostorder") {
             gators->printPostOrder();
-        }else if (command == "printLevelCount"){
+        }else if (functions[i] == "printLevelCount") {
             gators->printLevelCount();
         }
     }
-    return 0;
-}
 
+    return 0;
+
+}

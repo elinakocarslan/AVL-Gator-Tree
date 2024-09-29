@@ -28,7 +28,7 @@ private:
     Node* root = nullptr;
     Node* insertHelper(Node* node, std::string name, std::string ufid);
     void searchIDHelper(Node* node, std::string ufid);
-    bool searchNAMEHelper(Node* node, std::string name);
+    void searchNAMEHelper(Node* node, std::string name);
     Node* leftRotate(Node* x);
     Node* rightRotate(Node* y);
     void nodeHeight(Node* node);
@@ -38,7 +38,7 @@ private:
     void printPostOrderHelper(Node* node);
     void printLevelCountHelper(Node* node);
     Node* removeHelper(Node* node, std::string ufid);
-    Node* removeInOrderHelper(Node* node, int index);
+    Node* removeInOrderHelper(Node* node, int& index);
 
 
 
